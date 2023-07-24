@@ -30,12 +30,60 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     const collegeCollection = client.db("End-Game").collection("college-data");
+    const selectedCollection = client.db("End-Game").collection("my-college");
+    const reviewCollection = client.db("End-Game").collection("review");
+    const usersCollection = client.db("End-Game").collection("users");
 
-    app.get('/college', async(req, res) =>{
-      const result = collegeCollection.find().toArray()
+
+
+    app.post('/users', async(req, res) =>{
+      const user = req.body;
+      console.log(user);
+      const query = { email: user.email };
+      const existingUser = await usersCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: "user already exist" });
+      }
+      const result = await usersCollection.insertOne(user)
       res.send(result)
     })
 
+    app.get('/college', async(req, res) =>{
+      const result = await collegeCollection.find().toArray()
+      res.send(result)
+    })
+
+
+    // My selected college
+    app.post('/my-college', async(req, res) =>{
+      const body = req.body
+      const result = await selectedCollection.insertOne(body)
+      res.send(result)
+    })
+
+    app.get('/my-college', async(req, res) =>{
+      const email = req.query.email
+      console.log(email);
+      if(!email){
+        return []
+      }
+      const filter = {email:email}
+      const result = await selectedCollection.find(filter).toArray()
+      res.send(result)
+    })
+
+    app.post('/review', async(req, res) =>{
+      const body = req.body
+      console.log(body);
+      const result  = await reviewCollection.insertOne(body)
+      res.send(result)
+    })
+
+    app.get('/review', async(req, res) =>{
+      const body = req.body;
+      const result = await reviewCollection.find().toArray()
+      res.send(result)
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
